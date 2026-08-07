@@ -1,3 +1,7 @@
+:root {
+  font-family: var(--font-roboto-flex);
+}
+
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
