@@ -1,37 +1,19 @@
 "use client";
 import { useChatStore } from "@/app/store/chat-store";
 import ChatMessage from "./chat-message";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
+import { useScrollToLastUserMsg } from "@/hooks/use-scroll-to-last-user-msg";
 
 function ChatMessages() {
   const { chats, activeChatId } = useChatStore();
   const activeChat = chats.find((chat) => chat.id === activeChatId);
 
-  const msgsDivRef = useRef<HTMLDivElement>(null);
-  const outerDivRef = useRef<HTMLDivElement>(null);
-  const lastUserMsgRef = useRef<HTMLDivElement>(null);
+  const { outerDivRef, msgsDivRef, lastUserMsgRef } =
+    useScrollToLastUserMsg(activeChat);
 
   const lastUserMsgIndex = activeChat?.messages.findLastIndex(
     (msg) => msg.role === "user",
   );
-
-  useEffect(() => {
-    const isLastMsgFromUser = activeChat?.messages.at(-1)?.role === "user";
-    if (!outerDivRef.current || !msgsDivRef.current || !lastUserMsgRef.current)
-      return;
-
-    const msgsDivRect = msgsDivRef.current.getBoundingClientRect();
-    const outerDivRect = outerDivRef.current.getBoundingClientRect();
-    const lastUserMsgRect = lastUserMsgRef.current.getBoundingClientRect();
-
-    msgsDivRef.current.style.minHeight =
-      outerDivRect.height + (lastUserMsgRect.top - msgsDivRect.top) - 20 + "px";
-
-    msgsDivRef.current.scrollIntoView({
-      behavior: isLastMsgFromUser ? "smooth" : "auto",
-      block: "end",
-    });
-  }, [activeChat?.messages]);
 
   if (!(activeChat && activeChat.messages.length > 0)) {
     return (
