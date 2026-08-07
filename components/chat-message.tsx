@@ -12,8 +12,8 @@ function ChatMessage({ role, children }: ChatMessageProps) {
   const containerClasses = cn("flex", isUser ? "justify-end" : "justify-start");
 
   const bubbleClasses = cn(
-    "px-4 py-2 rounded",
-    isUser ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-800",
+    "px-4 py-2 rounded-full",
+    isUser ? "bg-blue-500 text-white" : "bg-gray-50 text-gray-800",
   );
   return (
     <div className={containerClasses}>

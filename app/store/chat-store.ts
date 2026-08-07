@@ -19,7 +19,7 @@ export type ChatState = {
   activeChatId: string | null;
   createChat: () => void;
   setActiveChat: (id: string) => void;
-  addChatMessage: (content: string) => void;
+  addChatMessage: (content: string, role: MessageRole) => void;
 };
 
 const id = () => Math.random().toString(36).slice(2, 10);
@@ -44,7 +44,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
     set({ activeChatId: id });
   },
 
-  addChatMessage: (content: string) => {
+  addChatMessage: (content: string, role: MessageRole) => {
     const { chats, activeChatId } = get();
 
     if (!activeChatId) {
@@ -62,21 +62,15 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const updatedChats = get().chats.map((chat: Chat) => {
       if (chat.id !== get().activeChatId) return chat;
 
-      const userMsg: Message = {
+      const message: Message = {
         id: id(),
-        role: "user",
+        role: role,
         content,
-      };
-
-      const botMsg: Message = {
-        id: id(),
-        role: "bot",
-        content: `You said: "${content}" (AI will reply later)`,
       };
 
       return {
         ...chat,
-        messages: [...chat.messages, userMsg, botMsg],
+        messages: [...chat.messages, message],
         title: chat.messages.length === 0 ? content : chat.title,
       };
     });

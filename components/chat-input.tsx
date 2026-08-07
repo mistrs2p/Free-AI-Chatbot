@@ -12,23 +12,29 @@ function ChatInput() {
     e.preventDefault();
     const text = value.trim();
     if (!text) return;
-    addChatMessage(value);
+    addChatMessage(value, "user");
+    setTimeout(() => {
+      addChatMessage(`You said: "${value}" (AI will reply later)`, "bot");
+    }, 1000);
+
     setValue("");
   };
   return (
-    <form onSubmit={handleSubmit} className="p-4 flex gap-2">
-      <Input
-        type="text"
-        placeholder="Type your message..."
-        value={value}
-        onChange={(e) => setValue(e.target.value)}
-        className="w-full px-4 py-2 border rounded"
-      />
-      <Button type="submit">
-        <Send />
-        Send
-      </Button>
-    </form>
+    <div className="w-full max-w-200 mx-auto">
+      <form onSubmit={handleSubmit} className="p-4 flex gap-2 mb-4">
+        <Input
+          type="text"
+          placeholder="Type your message..."
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+          className="w-full px-4 py-2 border rounded"
+        />
+        <Button type="submit" variant={"outline"}>
+          <Send />
+          Send
+        </Button>
+      </form>
+    </div>
   );
 }
 
