@@ -9,7 +9,7 @@ function ChatMessages() {
   return (
     <div className="flex-1 p-4 overflow-y-auto space-y-4">
       {activeChat?.messages.map((message) => (
-        <ChatMessage key={activeChat.id} role={message.role}>
+        <ChatMessage key={message.id} role={message.role}>
           {message.content}
         </ChatMessage>
       ))}

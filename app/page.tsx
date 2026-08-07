@@ -5,7 +5,7 @@ import { SidebarProvider } from "@/components/ui/sidebar";
 export default function Home() {
   return (
     <SidebarProvider>
-      <div className="flex h-screen">
+      <div className="flex h-screen w-screen">
         <ChatSidebar />
         <ChatArea />
       </div>

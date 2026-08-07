@@ -3,6 +3,7 @@ import { create } from "zustand";
 export type MessageRole = "user" | "bot";
 
 export type Message = {
+  id: string;
   role: MessageRole;
   content: string;
 };
@@ -46,15 +47,29 @@ export const useChatStore = create<ChatState>((set, get) => ({
   addChatMessage: (content: string) => {
     const { chats, activeChatId } = get();
 
-    const updatedChats = chats.map((chat: Chat) => {
-      if (chat.id !== activeChatId) return chat;
+    if (!activeChatId) {
+      const newChat: Chat = {
+        id: id(),
+        title: content,
+        messages: [],
+      };
+      set({
+        chats: [newChat, ...chats],
+        activeChatId: newChat.id,
+      });
+    }
+
+    const updatedChats = get().chats.map((chat: Chat) => {
+      if (chat.id !== get().activeChatId) return chat;
 
       const userMsg: Message = {
+        id: id(),
         role: "user",
         content,
       };
 
       const botMsg: Message = {
+        id: id(),
         role: "bot",
         content: `You said: "${content}" (AI will reply later)`,
       };

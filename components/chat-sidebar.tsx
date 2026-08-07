@@ -1,5 +1,6 @@
-import React from "react";
-import { Button } from "./ui/button";
+"use client";
+import { Button } from "@/components/ui/button";
+import { MessageSquare, Plus } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -8,18 +9,18 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
 } from "./ui/sidebar";
-import { MessageSquare, Plus } from "lucide-react";
+import { useChatStore } from "@/app/store/chat-store";
 
-const chats = [
-  { id: "c1", title: "Project ideas" },
-  { id: "c2", title: "Ideas for new features" },
-  { id: "c3", title: "Bug reports" },
-];
-function ChatSidebar() {
+export default function ChatSidebar() {
+  const chats = useChatStore((s) => s.chats);
+  const activeChatId = useChatStore((s) => s.activeChatId);
+  const setActiveChat = useChatStore((s) => s.setActiveChat);
+  const createChat = useChatStore((s) => s.createChat);
+
   return (
     <Sidebar>
-      <SidebarHeader>
-        <Button>
+      <SidebarHeader className="p-4">
+        <Button onClick={createChat}>
           <Plus />
           New Chat
         </Button>
@@ -27,13 +28,16 @@ function ChatSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel>Recent Chats</SidebarGroupLabel>
+          <SidebarGroupLabel>Recent chats</SidebarGroupLabel>
           <SidebarGroupContent>
             {chats.map((chat) => (
               <Button
                 key={chat.id}
                 variant="ghost"
-                className="w-full flex justify-start gap-2"
+                onClick={() => setActiveChat(chat.id)}
+                className={`w-full flex justify-start gap-2 ${
+                  chat.id === activeChatId ? "bg-gray-200" : ""
+                }`}
               >
                 <MessageSquare />
                 <span className="truncate">{chat.title}</span>
@@ -45,5 +49,3 @@ function ChatSidebar() {
     </Sidebar>
   );
 }
-
-export default ChatSidebar;
