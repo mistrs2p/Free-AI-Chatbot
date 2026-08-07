@@ -1,6 +1,6 @@
 import { cn } from "@/lib/utils";
 import React from "react";
-
+import ReactMarkdown from "react-markdown";
 type ChatMessageProps = {
   role: "user" | "bot";
   children: React.ReactNode;
@@ -17,7 +17,16 @@ function ChatMessage({ role, children }: ChatMessageProps) {
   );
   return (
     <div className={containerClasses}>
-      <div className={bubbleClasses}>{children}</div>
+      <div className={bubbleClasses}>
+        {isUser ? (
+          children
+        ) : (
+            <div className="prose max-w-none">
+
+                <ReactMarkdown>{children as string}</ReactMarkdown>
+            </div>
+        )}
+      </div>
     </div>
   );
 }
