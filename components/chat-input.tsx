@@ -7,6 +7,61 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { useChatStore } from "@/app/store/chat-store";
 
+export type ChatRequestMessage = {
+  role: "user" | "assistant";
+  content: string;
+};
+
+export async function streamChatResponse(
+  messages: ChatRequestMessage[],
+  onChunk: (content: string) => void,
+) {
+  const res = await fetch("/api/chat", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ messages }),
+  });
+
+  if (!res.ok) {
+    let message = "Failed to get AI response";
+
+    try {
+      const data = await res.json();
+      if (typeof data?.error === "string") {
+        message = data.error;
+      }
+    } catch {
+      // Keep the fallback message when the response is not JSON.
+    }
+
+    throw new Error(message);
+  }
+
+  if (!res.body) {
+    throw new Error("Response body is empty");
+  }
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let fullText = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+
+    if (done) break;
+
+    fullText += decoder.decode(value, { stream: true });
+    onChunk(fullText);
+  }
+
+  fullText += decoder.decode();
+  if (fullText) {
+    onChunk(fullText);
+  }
+}
+
 function ChatInput() {
   const [value, setValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -34,58 +89,27 @@ function ChatInput() {
         throw new Error("Active chat was not found");
       }
 
-      const messages = activeChat.messages
+      const messages: ChatRequestMessage[] = activeChat.messages
         .filter((message) => message.content.trim().length > 0)
         .map((message) => ({
           role: message.role === "bot" ? "assistant" : "user",
           content: message.content,
         }));
 
-      const res = await fetch("/api/chat", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          messages,
-        }),
-      });
-
-      if (!res.ok) {
-        throw new Error("Failed to get AI response");
-      }
-
-      if (!res.body) {
-        throw new Error("Response body is empty");
-      }
-
       const botMessageId = addChatMessage("", "bot");
 
-      const reader = res.body.getReader();
-      const decoder = new TextDecoder();
-
-      let fullText = "";
-
-      while (true) {
-        const { done, value } = await reader.read();
-
-        if (done) break;
-
-        const chunk = decoder.decode(value, {
-          stream: true,
-        });
-
-        fullText += chunk;
-
+      await streamChatResponse(messages, (fullText) => {
         updateChatMessage(botMessageId, fullText);
-      }
+      });
     } catch (error) {
       console.error(error);
 
-      addChatMessage(
-        "Something went wrong while generating the response.",
-        "bot",
-      );
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Something went wrong while generating the response.";
+
+      addChatMessage(message, "bot");
     } finally {
       setIsLoading(false);
     }
