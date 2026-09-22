@@ -21,10 +21,13 @@ export type ChatState = {
 
   createChat: () => void;
   setActiveChat: (id: string) => void;
+  deleteChat: (id: string) => void;
+  renameChat: (id: string, title: string) => void;
 
   addChatMessage: (content: string, role: MessageRole) => string;
 
   updateChatMessage: (messageId: string, content: string) => void;
+  editUserMessage: (messageId: string, content: string) => void;
   removeChatMessage: (messageId: string) => void;
 };
 
@@ -54,6 +57,22 @@ export const useChatStore = create<ChatState>()(
         set({
           activeChatId: id,
         });
+      },
+
+      deleteChat: (id) => {
+        set((state) => {
+          const chats = state.chats.filter((chat) => chat.id !== id);
+          const activeChatId = state.activeChatId === id ? (chats[0]?.id ?? null) : state.activeChatId;
+          return { chats, activeChatId };
+        });
+      },
+
+      renameChat: (id, title) => {
+        const nextTitle = title.trim();
+        if (!nextTitle) return;
+        set((state) => ({
+          chats: state.chats.map((chat) => chat.id === id ? { ...chat, title: nextTitle } : chat),
+        }));
       },
 
       addChatMessage: (content, role) => {
@@ -103,6 +122,27 @@ export const useChatStore = create<ChatState>()(
         });
 
         return messageId;
+      },
+
+      editUserMessage: (messageId, content) => {
+        const nextContent = content.trim();
+        if (!nextContent) return;
+        const { activeChatId } = get();
+        if (!activeChatId) return;
+        set((state) => ({
+          chats: state.chats.map((chat) => {
+            if (chat.id !== activeChatId) return chat;
+            const index = chat.messages.findIndex((message) => message.id === messageId);
+            if (index === -1 || chat.messages[index].role !== "user") return chat;
+            return {
+              ...chat,
+              messages: chat.messages.slice(0, index + 1).map((message) =>
+                message.id === messageId ? { ...message, content: nextContent } : message,
+              ),
+              title: index === 0 ? nextContent : chat.title,
+            };
+          }),
+        }));
       },
 
       removeChatMessage: (messageId) => {
