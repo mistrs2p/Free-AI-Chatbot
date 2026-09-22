@@ -25,6 +25,7 @@ export type ChatState = {
   addChatMessage: (content: string, role: MessageRole) => string;
 
   updateChatMessage: (messageId: string, content: string) => void;
+  removeChatMessage: (messageId: string) => void;
 };
 
 const id = () => Math.random().toString(36).slice(2, 10);
@@ -102,6 +103,25 @@ export const useChatStore = create<ChatState>()(
         });
 
         return messageId;
+      },
+
+      removeChatMessage: (messageId) => {
+        const { activeChatId } = get();
+
+        if (!activeChatId) return;
+
+        set((state) => ({
+          chats: state.chats.map((chat) =>
+            chat.id === activeChatId
+              ? {
+                  ...chat,
+                  messages: chat.messages.filter(
+                    (message) => message.id !== messageId,
+                  ),
+                }
+              : chat,
+          ),
+        }));
       },
 
       updateChatMessage: (messageId, content) => {
