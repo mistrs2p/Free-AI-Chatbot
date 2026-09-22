@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Send } from "lucide-react";
+import React, { useRef, useState } from "react";
+import { Send, Square } from "lucide-react";
 
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
@@ -15,8 +15,10 @@ export type ChatRequestMessage = {
 export async function streamChatResponse(
   messages: ChatRequestMessage[],
   onChunk: (content: string) => void,
+  signal?: AbortSignal,
 ) {
   const res = await fetch("/api/chat", {
+    signal,
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -65,6 +67,7 @@ export async function streamChatResponse(
 function ChatInput() {
   const [value, setValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const addChatMessage = useChatStore((state) => state.addChatMessage);
   const updateChatMessage = useChatStore((state) => state.updateChatMessage);
@@ -82,6 +85,8 @@ function ChatInput() {
     setIsLoading(true);
 
     let botMessageId: string | null = null;
+    const abortController = new AbortController();
+    abortControllerRef.current = abortController;
 
     try {
       const { activeChatId, chats } = useChatStore.getState();
@@ -100,10 +105,18 @@ function ChatInput() {
 
       botMessageId = addChatMessage("", "bot");
 
-      await streamChatResponse(messages, (fullText) => {
-        updateChatMessage(botMessageId, fullText);
-      });
+      await streamChatResponse(
+        messages,
+        (fullText) => {
+          updateChatMessage(botMessageId!, fullText);
+        },
+        abortController.signal,
+      );
     } catch (error) {
+      if (error instanceof DOMException && error.name === "AbortError") {
+        return;
+      }
+
       console.error(error);
 
       const message =
@@ -117,8 +130,13 @@ function ChatInput() {
         addChatMessage(message, "bot");
       }
     } finally {
+      abortControllerRef.current = null;
       setIsLoading(false);
     }
+  };
+
+  const handleStop = () => {
+    abortControllerRef.current?.abort();
   };
 
   return (
@@ -133,14 +151,25 @@ function ChatInput() {
           className="w-full px-4 py-2 border rounded"
         />
 
-        <Button
-          type="submit"
-          variant="outline"
-          disabled={isLoading || !value.trim()}
-        >
-          <Send />
-          {isLoading ? "Thinking..." : "Send"}
-        </Button>
+        {isLoading ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleStop}
+          >
+            <Square />
+            Stop
+          </Button>
+        ) : (
+          <Button
+            type="submit"
+            variant="outline"
+            disabled={!value.trim()}
+          >
+            <Send />
+            Send
+          </Button>
+        )}
       </form>
     </div>
   );
