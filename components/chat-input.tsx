@@ -81,6 +81,8 @@ function ChatInput() {
     setValue("");
     setIsLoading(true);
 
+    let botMessageId: string | null = null;
+
     try {
       const { activeChatId, chats } = useChatStore.getState();
       const activeChat = chats.find((chat) => chat.id === activeChatId);
@@ -96,7 +98,7 @@ function ChatInput() {
           content: message.content,
         }));
 
-      const botMessageId = addChatMessage("", "bot");
+      botMessageId = addChatMessage("", "bot");
 
       await streamChatResponse(messages, (fullText) => {
         updateChatMessage(botMessageId, fullText);
@@ -109,7 +111,11 @@ function ChatInput() {
           ? error.message
           : "Something went wrong while generating the response.";
 
-      addChatMessage(message, "bot");
+      if (botMessageId) {
+        updateChatMessage(botMessageId, message);
+      } else {
+        addChatMessage(message, "bot");
+      }
     } finally {
       setIsLoading(false);
     }
