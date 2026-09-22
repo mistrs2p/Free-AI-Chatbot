@@ -12,7 +12,6 @@ function ChatInput() {
   const [isLoading, setIsLoading] = useState(false);
 
   const addChatMessage = useChatStore((state) => state.addChatMessage);
-
   const updateChatMessage = useChatStore((state) => state.updateChatMessage);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -28,13 +27,27 @@ function ChatInput() {
     setIsLoading(true);
 
     try {
+      const { activeChatId, chats } = useChatStore.getState();
+      const activeChat = chats.find((chat) => chat.id === activeChatId);
+
+      if (!activeChat) {
+        throw new Error("Active chat was not found");
+      }
+
+      const messages = activeChat.messages
+        .filter((message) => message.content.trim().length > 0)
+        .map((message) => ({
+          role: message.role === "bot" ? "assistant" : "user",
+          content: message.content,
+        }));
+
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          content: text,
+          messages,
         }),
       });
 
