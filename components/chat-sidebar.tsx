@@ -1,6 +1,6 @@
 "use client";
 import { Button } from "@/components/ui/button";
-import { MessageSquare, Plus } from "lucide-react";
+import { MessageSquare, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +16,8 @@ export default function ChatSidebar() {
   const activeChatId = useChatStore((s) => s.activeChatId);
   const setActiveChat = useChatStore((s) => s.setActiveChat);
   const createChat = useChatStore((s) => s.createChat);
+  const deleteChat = useChatStore((s) => s.deleteChat);
+  const renameChat = useChatStore((s) => s.renameChat);
 
   return (
     <Sidebar>
@@ -40,7 +42,15 @@ export default function ChatSidebar() {
                 }`}
               >
                 <MessageSquare />
-                <span className="truncate">{chat.title}</span>
+                <span className="truncate flex-1 text-left">{chat.title}</span>
+                <span className="flex items-center gap-1">
+                  <span role="button" tabIndex={0} aria-label="Rename chat" className="rounded p-1 hover:bg-muted" onClick={(event) => { event.stopPropagation(); const title = window.prompt("Rename chat", chat.title); if (title) renameChat(chat.id, title); }}>
+                    <Pencil className="size-4" />
+                  </span>
+                  <span role="button" tabIndex={0} aria-label="Delete chat" className="rounded p-1 hover:bg-destructive/10" onClick={(event) => { event.stopPropagation(); if (window.confirm("Delete this chat?")) deleteChat(chat.id); }}>
+                    <Trash2 className="size-4" />
+                  </span>
+                </span>
               </Button>
             ))}
           </SidebarGroupContent>
