@@ -47,8 +47,10 @@ function ChatMessages() {
     setRetryingMessageId(messageId);
     removeChatMessage(messageId);
 
+    let botMessageId: string | null = null;
+
     try {
-      const botMessageId = addChatMessage("", "bot");
+      botMessageId = addChatMessage("", "bot");
 
       await streamChatResponse(contextMessages, (fullText) => {
         updateChatMessage(botMessageId, fullText);
@@ -56,12 +58,16 @@ function ChatMessages() {
     } catch (error) {
       console.error(error);
 
-      addChatMessage(
+      const errorMessage =
         error instanceof Error
           ? error.message
-          : "Something went wrong while generating the response.",
-        "bot",
-      );
+          : "Something went wrong while generating the response.";
+
+      if (botMessageId) {
+        updateChatMessage(botMessageId, errorMessage);
+      } else {
+        addChatMessage(errorMessage, "bot");
+      }
     } finally {
       setRetryingMessageId(null);
     }
